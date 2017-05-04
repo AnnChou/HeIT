@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+<title>Scatterplot of JSON data</title>
+    <script type="text/javascript" src="../../lib/d3.js"></script>
+    <script src="../../data/out_of_hospital_time_vs_travel_time_record_xy.json" type="text/javascript"></script>
+
+<script type="text/javascript">
+function draw(data) {
+  "use strict";
+
+  var w=800, h=400;
+  var pad = {left: 20, right: 20, top: 20, bottom: 20};
+
+  var svg = d3.select("body")
+                .append("svg")
+                  .attr("height", h)
+                  .attr("width", w);
+
+  svg.append("rect")
+       .attr("x", pad.left).attr("y",pad.top)
+       .attr("width", w-(pad.left+pad.right))
+       .attr("height",h-(pad.top+pad.bottom))
+       .attr("stroke", "black")
+       .attr("fill", "rgb(230,230,230)");
+    
+// x = distance_km
+// y = out_of_hospital_time_minute
+  var xMin = d3.min(data, function(d) { return Number(d.distance_km); });
+  var xMax = d3.max(data, function(d) { return Number(d.distance_km); });
+  var yMin = d3.min(data, function(d) { return Number(d.out_of_hospital_time_minute); });
+  var yMax = d3.max(data, function(d) { return Number(d.out_of_hospital_time_minute); });
+
+  var xScale = d3.scale.linear().domain([xMin, xMax]).range([pad.left*2, w-pad.right*2]);
+  var yScale = d3.scale.linear().domain([yMin, yMax]).range([h-pad.bottom*2, pad.top*2]);
+
+  var circles = svg.selectAll("circle")
+                      .data(data)
+                      .enter()
+                        .append("circle")
+                          .attr("cx", function(d) { return xScale(d.distance_km); })
+                          .attr("cy", function(d) { return yScale(d.out_of_hospital_time_minute); })
+                          .attr("r", 5)
+                          .attr("opacity", 0.8)
+                          .attr("fill", function(d) { return ['blue', 'green', 'red'][d.z-1]; })
+                        .on("mouseover", function() { d3.select(this).attr("r", 10) })
+                        .on("mouseout", function() { d3.select(this).attr("r", 5) });
+}
+</script>
+</head>
+<body>
+<script type="text/javascript">
+  d3.json("../../data/out_of_hospital_time_vs_travel_time_record_xy.json", draw);
+</script>
+</body>
+</html>

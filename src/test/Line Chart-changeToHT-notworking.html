@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Line Chart</title>
+<style>
+
+  .axis path,
+  .axis line{
+    fill: none;
+    stroke: black;
+  }
+
+  .line{
+    fill: none;
+    stroke: blue;
+    stroke-width: 2px;
+  }
+
+  .tick text{
+    font-size: 12px;
+  }
+
+  .tick line{
+    opacity: 0.2;
+  }
+
+</style>
+</head>
+<body>
+<script src="http://d3js.org/d3.v3.js"></script>
+<script>
+
+var margin = {top: 20, right: 100, bottom: 30, left: 100},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var dataset = [
+  {out_of_hospital_time_minute: 0, y: 5},
+  {out_of_hospital_time_minute: 1, y: 8},
+  {out_of_hospital_time_minute: 2, y: 13},
+  {out_of_hospital_time_minute: 3, y: 12},
+  {out_of_hospital_time_minute: 4, y: 16},
+];
+    
+var dataset2 = [
+        {"out_of_hospital_time_minute": 127,  //d[0]
+         "mode": " H",                         //d[1] 
+         "distance_km": 76.3,                   //d[2]
+         "diagnostic_smur": "SCA ST+"           //d[3]
+        },
+        {"out_of_hospital_time_minute": 70, 
+         "mode": " H", 
+         "distance_km": 40.9, 
+         "diagnostic_smur": "SCA ST+"
+        }, 
+        {"out_of_hospital_time_minute": 103, "mode": " H", "distance_km": 85.1, "diagnostic_smur": "AVC"}, 
+        {"out_of_hospital_time_minute": 90, "mode": " H", "distance_km": 57.9, "diagnostic_smur": "SCA ST+"},
+        {"out_of_hospital_time_minute": 88, "mode": " H", "distance_km": 50.4, "diagnostic_smur": "SCA ST+"},
+        {"out_of_hospital_time_minute": 97, "mode": " H", "distance_km": 78.3, "diagnostic_smur": "AVC"}, 
+        {"out_of_hospital_time_minute": 86, "mode": " H", "distance_km": 74.0, "diagnostic_smur": "SCA ST+"},    
+    
+
+var xScale = d3.scale.linear()
+    .domain([0, d3.max(dataset, function(d){ return d[0]; })])
+    .range([0, width]);
+
+var yScale = d3.scale.linear()
+    .domain([0, d3.max(dataset, function(d){ return d[1]; })])
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(xScale)
+    .orient("bottom")
+    .innerTickSize(-height)
+    .outerTickSize(0)
+    .tickPadding(10);
+
+var yAxis = d3.svg.axis()
+    .scale(yScale)
+    .orient("left")
+    .innerTickSize(-width)
+    .outerTickSize(0)
+    .tickPadding(10);
+
+var line = d3.svg.line()
+    .x(function(d) { return xScale(d[0]); })
+    .y(function(d) { return yScale(d[1]); });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+
+  svg.append("path")
+      .data([dataset])
+      .attr("class", "line")
+      .attr("d", line);
+
+</script>
+</body>
+</html>

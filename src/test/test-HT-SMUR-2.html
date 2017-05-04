@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Chart</title>
+  <link rel="stylesheet" type="text/css" href="../../css/styles.css"/>
+  <script type="text/javascript" src="../../lib/d3.js"></script>
+  <script type="text/javascript" src="../../data/out_of_hospital_time_vs_travel_time_record1.js"></script>    
+</head>
+<body>
+  <h1>Chart</h1>
+  <p>
+    <input id="slider" type="range">
+  </p>
+  <div id="chart"></div>
+    <script type="text/javascript">
+  
+    /********
+     * Canvas *
+     ********/   // Set the dimensions of the canvas / graph
+    var margin = {top: 30, right: 20, bottom: 30, left: 50},
+        width = 600 - margin.left - margin.right,
+        height = 270 - margin.top - margin.bottom;    
+        
+    /********
+     * Data *
+     ********/
+    var dataset = HTdata;         
+
+    dataset =  [
+    {"out_of_hospital_time_minute": 127, "mode": " H", "distance_km": 76.3, "diagnostic_smur": "SCA ST+"},
+    {"out_of_hospital_time_minute": 70, "mode": " H", "distance_km": 40.9, "diagnostic_smur": "SCA ST+"},     
+        ]
+    /********
+     * Scale *
+     ********/        
+    var xScale = d3.scale.linear()
+                     .domain([0, d3.max(dataset, function(d) { return d.distance_km; })])
+                     .range([0, width]);
+        
+    var yScale = d3.scale.linear()
+                     .domain([0, d3.max(dataset, function(d) { return d.out_of_hospital_time_minute; })])
+                     .range([0, height]);
+        
+    /**************
+     * Make Chart *
+     **************/
+
+    function makeChart(data){
+
+       x = xScale;
+
+       y = yScale;
+       
+      var canvas = d3.select(".chart")
+          .style("width",chartWidth)
+          .style("height",chartHeight);
+    
+      var scatter = d3.select(".chart").selectAll("circle")
+          .data(data);
+        
+      //Enter
+        var enter = scatter.enter().append("circle")
+          .attr("fill-opacity",0.85)
+          .attr("r",function(d){ return 5; })
+          .attr("stroke-width","0px");
+        
+        xAxis = d3.axisBottom()
+          .scale(x)
+          .ticks(0);
+  
+      yAxis = d3.axisLeft()
+          .scale(y);
+
+      var yAxisGroup = canvas.append("g")
+          .attr("class","axis")
+          .attr("transform","translate(25,0)")
+          .call(yAxis);
+
+      yAxisGroup.selectAll("text")
+          .attr("transform", "translate(-5,0)");
+
+      canvas.append("g")
+          .attr("class","axis")
+          .attr("transform","translate(0,"+(height-25)+")")
+          .call(xAxis);
+
+    }
+
+    makeChart(dataset);
+    
+    </script>
+  </body>
+</html>

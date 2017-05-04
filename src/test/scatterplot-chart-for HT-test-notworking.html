@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Scatter Plot Chart (HT)</title>
+    <link rel="stylesheet" type="text/css" href="../../css/styles.css"/>
+    <script type="text/javascript" src="../../lib/d3.js"></script>
+    <script type="text/javascript" src="../../data/out_of_hospital_time_vs_travel_time_record1.js"></script>   
+</head>
+
+<body>
+
+<script type="text/javascript">
+//START function scatter Plot
+function scatterPlotChart() {
+    var _chart = {};
+
+    var _width = 500, _height = 500,
+            _margins = {top: 30, left: 30, right: 30, bottom: 30},
+            _x, _y,
+            _data = [],
+            _colors = d3.scale.category10(),
+            _svg,
+            _bodyG,
+            _symbolTypes = d3.scale.ordinal() // <-A
+                    .range(["circle",
+                        "cross",
+                        "diamond",
+                        "square",
+                        "triangle-down",
+                        "triangle-up"]);
+
+    _chart.render = function () {
+        if (!_svg) {
+            _svg = d3.select("body").append("svg")
+                    .attr("height", _height)
+                    .attr("width", _width);
+
+            renderAxes(_svg);
+
+            defineBodyClip(_svg);
+        }
+
+        renderBody(_svg);
+    };
+
+    function renderAxes(svg) {
+        var axesG = svg.append("g")
+                .attr("class", "axes");
+
+        renderXAxis(axesG);
+
+        renderYAxis(axesG);
+    }
+    
+    function renderXAxis(axesG){
+        var xAxis = d3.svg.axis()
+                .scale(_x.range([0, quadrantWidth()]))
+                .orient("bottom");        
+
+        axesG.append("g")
+                .attr("class", "x axis")
+                .attr("transform", function () {
+                    return "translate(" + xStart() + "," + yStart() + ")";
+                })
+                .call(xAxis);
+                
+        d3.selectAll("g.x g.tick")
+            .append("line")
+                .classed("grid-line", true)
+                .attr("x1", 0)
+                .attr("y1", 0)
+                .attr("x2", 0)
+                .attr("y2", - quadrantHeight());
+    }
+    
+    function renderYAxis(axesG){
+        var yAxis = d3.svg.axis()
+                .scale(_y.range([quadrantHeight(), 0]))
+                .orient("left");
+                
+        axesG.append("g")
+                .attr("class", "y axis")
+                .attr("transform", function () {
+                    return "translate(" + xStart() + "," + yEnd() + ")";
+                })
+                .call(yAxis);
+                
+         d3.selectAll("g.y g.tick")
+            .append("line")
+                .classed("grid-line", true)
+                .attr("x1", 0)
+                .attr("y1", 0)
+                .attr("x2", quadrantWidth())
+                .attr("y2", 0);
+    }
+
+    function defineBodyClip(svg) {
+        var padding = 5;
+
+        svg.append("defs")
+                .append("clipPath")
+                .attr("id", "body-clip")
+                .append("rect")
+                .attr("x", 0 - padding)
+                .attr("y", 0)
+                .attr("width", quadrantWidth() + 2 * padding)
+                .attr("height", quadrantHeight());
+    }
+
+    function renderBody(svg) {
+        if (!_bodyG)
+            _bodyG = svg.append("g")
+                    .attr("class", "body")                    
+                    .attr("transform", "translate(" 
+                        + xStart() + "," 
+                        + yEnd() + ")") 
+                    .attr("clip-path", "url(#body-clip)");
+
+        renderSymbols();
+    }
+
+    function renderSymbols() { // <-B
+        _data.forEach(function (list, i) {
+            _bodyG.selectAll("path._" + i)
+                        .data(list)
+                    .enter()
+                    .append("path")
+                    .attr("class", "symbol _" + i);
+
+            _bodyG.selectAll("path._" + i)
+                    .data(list)
+                        .classed(_symbolTypes(i), true)
+                    .transition() // <-C
+                        .attr("transform", function(d){
+                            return "translate(" // <-D
+                                    + _x(d.x) 
+                                    + "," 
+                                    + _y(d.y) 
+                                    + ")";
+                        })
+                        .attr("d", 
+                            d3.svg.symbol() // <-E
+                                .type(_symbolTypes(i))
+                        ); 
+        });
+    }
+
+    function xStart() {
+        return _margins.left;
+    }
+
+    function yStart() {
+        return _height - _margins.bottom;
+    }
+
+    function xEnd() {
+        return _width - _margins.right;
+    }
+
+    function yEnd() {
+        return _margins.top;
+    }
+
+    function quadrantWidth() {
+        return _width - _margins.left - _margins.right;
+    }
+
+    function quadrantHeight() {
+        return _height - _margins.top - _margins.bottom;
+    }
+
+    _chart.width = function (w) {
+        if (!arguments.length) return _width;
+        _width = w;
+        return _chart;
+    };
+
+    _chart.height = function (h) {
+        if (!arguments.length) return _height;
+        _height = h;
+        return _chart;
+    };
+
+    _chart.margins = function (m) {
+        if (!arguments.length) return _margins;
+        _margins = m;
+        return _chart;
+    };
+
+    _chart.colors = function (c) {
+        if (!arguments.length) return _colors;
+        _colors = c;
+        return _chart;
+    };
+
+    _chart.x = function (x) {
+        if (!arguments.length) return _x;
+        _x = x;
+        return _chart;
+    };
+
+    _chart.y = function (y) {
+        if (!arguments.length) return _y;
+        _y = y;
+        return _chart;
+    };
+
+    _chart.addSeries = function (series) {
+        _data.push(series);
+        return _chart;
+    };
+
+    return _chart;
+}  // END function scatter plot
+
+//START data
+var data =  [
+    {"out_of_hospital_time_minute": 127, "mode": " H", "distance_km": 76.3, "diagnostic_smur": "SCA ST+"},
+    {"out_of_hospital_time_minute": 70, "mode": " H", "distance_km": 40.9, "diagnostic_smur": "SCA ST+"}, 
+    {"out_of_hospital_time_minute": 103, "mode": " H", "distance_km": 85.1, "diagnostic_smur": "AVC"}, 
+    {"out_of_hospital_time_minute": 90, "mode": " H", "distance_km": 57.9, "diagnostic_smur": "SCA ST+"},
+    {"out_of_hospital_time_minute": 88, "mode": " H", "distance_km": 50.4, "diagnostic_smur": "SCA ST+"},
+    {"out_of_hospital_time_minute": 97, "mode": " H", "distance_km": 78.3, "diagnostic_smur": "AVC"}, 
+    {"out_of_hospital_time_minute": 86, "mode": " H", "distance_km": 74.0, "diagnostic_smur": "SCA ST+"},
+    {"out_of_hospital_time_minute": 152, "mode": " H", "distance_km": 77.0, "diagnostic_smur": "Polytraumatise"},
+    {"out_of_hospital_time_minute": 141, "mode": " H", "distance_km": 69.0, "diagnostic_smur": "SCA ST+"}, 
+    {"out_of_hospital_time_minute": 139, "mode": " H", "distance_km": 62.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 115, "mode": " H", "distance_km": 57.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 108, "mode": " H", "distance_km": 72.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 99, "mode": " H", "distance_km": 72.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 67, "mode": " H", "distance_km": 68.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 84, "mode": " H", "distance_km": 38.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 152, "mode": " H", "distance_km": 132.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 63, "mode": " H", "distance_km": 38.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 127, "mode": " H", "distance_km": 43.0, "diagnostic_smur": "Contusions"}, {"out_of_hospital_time_minute": 103, "mode": " H", "distance_km": 72.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 104, "mode": " H", "distance_km": 48.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 80, "mode": " H", "distance_km": 88.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 153, "mode": " H", "distance_km": 88.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 152, "mode": " H", "distance_km": 43.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 188, "mode": " H", "distance_km": 45.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 83, "mode": " H", "distance_km": 73.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 115, "mode": " H", "distance_km": 46.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 114, "mode": " H", "distance_km": 102.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 59, "mode": " H", "distance_km": 24.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 136, "mode": " H", "distance_km": 24.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 92, "mode": " H", "distance_km": 48.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 266, "mode": " H", "distance_km": 39.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 125, "mode": " H", "distance_km": 45.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 78, "mode": " H", "distance_km": 52.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 85, "mode": " H", "distance_km": 117.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 98, "mode": " H", "distance_km": 62.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 107, "mode": " H", "distance_km": 57.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 161, "mode": " H", "distance_km": 46.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 111, "mode": " H", "distance_km": 39.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 35, "mode": " H", "distance_km": 24.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 152, "mode": " H", "distance_km": 101.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 154, "mode": " H", "distance_km": 58.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 104, "mode": " H", "distance_km": 46.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 131, "mode": " H", "distance_km": 60.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 96, "mode": " H", "distance_km": 126.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 93, "mode": " H", "distance_km": 38.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 189, "mode": " H", "distance_km": 27.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 97, "mode": " H", "distance_km": 61.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 85, "mode": " H", "distance_km": 57.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 152, "mode": " H", "distance_km": 45.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 114, "mode": " H", "distance_km": 74.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 57, "mode": " H", "distance_km": 41.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 81, "mode": " H", "distance_km": 56.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 122, "mode": " H", "distance_km": 108.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 103, "mode": " H", "distance_km": 58.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 78, "mode": " H", "distance_km": 24.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 170, "mode": " H", "distance_km": 42.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 85, "mode": " H", "distance_km": 68.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 90, "mode": " H", "distance_km": 46.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 113, "mode": " H", "distance_km": 62.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 153, "mode": " H", "distance_km": 58.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 102, "mode": " H", "distance_km": 89.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 72, "mode": " H", "distance_km": 31.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 107, "mode": " H", "distance_km": 48.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 90, "mode": " H", "distance_km": 62.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 99, "mode": " H", "distance_km": 93.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 110, "mode": " H", "distance_km": 62.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 193, "mode": " H", "distance_km": 76.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 76, "mode": " H", "distance_km": 76.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 118, "mode": " H", "distance_km": 41.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 98, "mode": " H", "distance_km": 28.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 121, "mode": " H", "distance_km": 99.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 107, "mode": " H", "distance_km": 84.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 167, "mode": " H", "distance_km": 58.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 93, "mode": " H", "distance_km": 56.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 137, "mode": " H", "distance_km": 87.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 84, "mode": " H", "distance_km": 52.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 81, "mode": " H", "distance_km": 50.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 176, "mode": " H", "distance_km": 85.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 145, "mode": " H", "distance_km": 76.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 61, "mode": " H", "distance_km": 41.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 63, "mode": " H", "distance_km": 57.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 139, "mode": " H", "distance_km": 41.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 65, "mode": " H", "distance_km": 48.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 86, "mode": " H", "distance_km": 64.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 95, "mode": " H", "distance_km": 68.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 109, "mode": " H", "distance_km": 24.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 87, "mode": " H", "distance_km": 46.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 96, "mode": " H", "distance_km": 50.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 68, "mode": " H", "distance_km": 25.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 117, "mode": " H", "distance_km": 93.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 235, "mode": " H", "distance_km": 52.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 159, "mode": " H", "distance_km": 61.0, "diagnostic_smur": "ACR sur SCA"}, {"out_of_hospital_time_minute": 114, "mode": " H", "distance_km": 70.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 89, "mode": " H", "distance_km": 38.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 80, "mode": " H", "distance_km": 46.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 164, "mode": " H", "distance_km": 93.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 142, "mode": " H", "distance_km": 66.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 95, "mode": " H", "distance_km": 55.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 84, "mode": " H", "distance_km": 63.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 90, "mode": " H", "distance_km": 78.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 88, "mode": " H", "distance_km": 72.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 75, "mode": " H", "distance_km": 46.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 129, "mode": " H", "distance_km": 48.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 137, "mode": " H", "distance_km": 83.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 89, "mode": " H", "distance_km": 78.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 127, "mode": " H", "distance_km": 88.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 100, "mode": " H", "distance_km": 89.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 100, "mode": " H", "distance_km": 110.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 49, "mode": " H", "distance_km": 33.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 98, "mode": " H", "distance_km": 52.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 82, "mode": " H", "distance_km": 76.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 112, "mode": " H", "distance_km": 74.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 113, "mode": " H", "distance_km": 74.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 125, "mode": " H", "distance_km": 77.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 70, "mode": " H", "distance_km": 52.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 88, "mode": " H", "distance_km": 38.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 78, "mode": " H", "distance_km": 89.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 104, "mode": " H", "distance_km": 86.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 91, "mode": " H", "distance_km": 41.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 203, "mode": " H", "distance_km": 62.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 91, "mode": " H", "distance_km": 88.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 90, "mode": " T", "distance_km": 15.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 66, "mode": " T", "distance_km": 15.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 76, "mode": " T", "distance_km": 22.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 67, "mode": " T", "distance_km": 26.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 79, "mode": " T", "distance_km": 12.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 75, "mode": " T", "distance_km": 32.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 87, "mode": " T", "distance_km": 25.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 55, "mode": " T", "distance_km": 17.0, "diagnostic_smur": "Douleur non cororienne"}, {"out_of_hospital_time_minute": 76, "mode": " T", "distance_km": 17.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 91, "mode": " T", "distance_km": 17.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 84, "mode": " T", "distance_km": 14.0, "diagnostic_smur": "ACFA"}, {"out_of_hospital_time_minute": 84, "mode": " T", "distance_km": 14.0, "diagnostic_smur": "ACFA"}, {"out_of_hospital_time_minute": 75, "mode": " T", "distance_km": 25.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 77, "mode": " T", "distance_km": 26.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 88, "mode": " T", "distance_km": 24.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 97, "mode": " T", "distance_km": 26.0, "diagnostic_smur": "PNP et DT"}, {"out_of_hospital_time_minute": 87, "mode": " T", "distance_km": 16.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 86, "mode": " T", "distance_km": 26.0, "diagnostic_smur": "Douleur non cororienne"}, {"out_of_hospital_time_minute": 106, "mode": " T", "distance_km": 19.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 149, "mode": " T", "distance_km": 19.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 83, "mode": " T", "distance_km": 31.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 79, "mode": " T", "distance_km": 21.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 99, "mode": " T", "distance_km": 41.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 107, "mode": " T", "distance_km": 27.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 134, "mode": " T", "distance_km": 28.0, "diagnostic_smur": "Douleur non cororienne"}, {"out_of_hospital_time_minute": 89, "mode": " T", "distance_km": 34.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 86, "mode": " T", "distance_km": 21.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 93, "mode": " T", "distance_km": 16.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 116, "mode": " T", "distance_km": 36.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 104, "mode": " T", "distance_km": 24.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 103, "mode": " T", "distance_km": 16.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 71, "mode": " T", "distance_km": 20.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 115, "mode": " T", "distance_km": 36.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 95, "mode": " T", "distance_km": 15.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 94, "mode": " T", "distance_km": 45.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 90, "mode": " T", "distance_km": 31.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 124, "mode": " T", "distance_km": 50.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 85, "mode": " T", "distance_km": 41.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 75, "mode": " T", "distance_km": 21.0, "diagnostic_smur": "Douleur non cororienne"}, {"out_of_hospital_time_minute": 103, "mode": " T", "distance_km": 33.0, "diagnostic_smur": "Douleur non cororienne"}, {"out_of_hospital_time_minute": 136, "mode": " T", "distance_km": 17.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 105, "mode": " T", "distance_km": 25.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 106, "mode": " T", "distance_km": 26.0, "diagnostic_smur": "SCA non ST+"}, 
+    {"out_of_hospital_time_minute": 124, "mode": " T", "distance_km": 29.0, "diagnostic_smur": "Polytraumatise"}, 
+    {"out_of_hospital_time_minute": 104, "mode": " T", "distance_km": 29.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 106, "mode": " T", "distance_km": 29.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 104, "mode": " T", "distance_km": 29.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 92, "mode": " T", "distance_km": 15.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 78, "mode": " T", "distance_km": 17.0, "diagnostic_smur": "AIT "}, {"out_of_hospital_time_minute": 145, "mode": " T", "distance_km": 72.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 108, "mode": " T", "distance_km": 18.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 79, "mode": " T", "distance_km": 14.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 108, "mode": " T", "distance_km": 41.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 108, "mode": " T", "distance_km": 41.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 89, "mode": " T", "distance_km": 18.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 90, "mode": " T", "distance_km": 23.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 99, "mode": " T", "distance_km": 27.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 74, "mode": " T", "distance_km": 25.0, "diagnostic_smur": "Douleur non cororienne"}, {"out_of_hospital_time_minute": 87, "mode": " T", "distance_km": 22.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 106, "mode": " T", "distance_km": 34.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 106, "mode": " T", "distance_km": 34.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 106, "mode": " T", "distance_km": 34.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 143, "mode": " T", "distance_km": 45.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 88, "mode": " T", "distance_km": 19.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 130, "mode": " T", "distance_km": 29.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 63, "mode": " T", "distance_km": 31.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 88, "mode": " T", "distance_km": 21.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 89, "mode": " T", "distance_km": 34.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 143, "mode": " T", "distance_km": 25.0, "diagnostic_smur": "Fracture ouverte femur droit isolee"}, {"out_of_hospital_time_minute": 89, "mode": " T", "distance_km": 20.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 70, "mode": " T", "distance_km": 24.0, "diagnostic_smur": "DT atypique  "}, {"out_of_hospital_time_minute": 72, "mode": " T", "distance_km": 36.0, "diagnostic_smur": "Traumatisme peripherique"}, {"out_of_hospital_time_minute": 78, "mode": " T", "distance_km": 15.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 63, "mode": " T", "distance_km": 20.0, "diagnostic_smur": "Douleur non cororienne"}, {"out_of_hospital_time_minute": 86, "mode": " T", "distance_km": 22.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 88, "mode": " T", "distance_km": 15.0, "diagnostic_smur": "angor  "}, {"out_of_hospital_time_minute": 136, "mode": " T", "distance_km": 39.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 100, "mode": " T", "distance_km": 27.0, "diagnostic_smur": "ACR sur SCA ST+"}, {"out_of_hospital_time_minute": 102, "mode": " T", "distance_km": 21.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 73, "mode": " T", "distance_km": 34.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 85, "mode": " T", "distance_km": 22.0, "diagnostic_smur": "DT atypique  "}, {"out_of_hospital_time_minute": 98, "mode": " T", "distance_km": 34.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 112, "mode": " T", "distance_km": 31.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 95, "mode": " T", "distance_km": 41.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 68, "mode": " T", "distance_km": 21.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 44, "mode": " T", "distance_km": 18.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 85, "mode": " T", "distance_km": 22.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 96, "mode": " T", "distance_km": 34.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 116, "mode": " T", "distance_km": 26.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 91, "mode": " T", "distance_km": 22.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 58, "mode": " T", "distance_km": 33.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 43, "mode": " T", "distance_km": 31.0, "diagnostic_smur": "DT atypique  "}, {"out_of_hospital_time_minute": 96, "mode": " T", "distance_km": 41.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 75, "mode": " T", "distance_km": 27.0, "diagnostic_smur": "Malaise sans PCI"}, {"out_of_hospital_time_minute": 128, "mode": " T", "distance_km": 32.0, "diagnostic_smur": "DT atypique  "}, {"out_of_hospital_time_minute": 80, "mode": " T", "distance_km": 25.0, "diagnostic_smur": "Detresse Respiratoire Aigue"}, {"out_of_hospital_time_minute": 90, "mode": " T", "distance_km": 41.0, "diagnostic_smur": "DT atypique  "}, {"out_of_hospital_time_minute": 106, "mode": " T", "distance_km": 27.0, "diagnostic_smur": "AVC"}, {"out_of_hospital_time_minute": 84, "mode": " T", "distance_km": 15.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 97, "mode": " T", "distance_km": 38.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 105, "mode": " T", "distance_km": 16.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 87, "mode": " T", "distance_km": 31.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 80, "mode": " T", "distance_km": 26.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 149, "mode": " T", "distance_km": 62.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 88, "mode": " T", "distance_km": 33.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 110, "mode": " T", "distance_km": 29.0, "diagnostic_smur": "TJ"}, {"out_of_hospital_time_minute": 199, "mode": " T", "distance_km": 58.0, "diagnostic_smur": "Choc cardiogenique et ACR"}, {"out_of_hospital_time_minute": 114, "mode": " T", "distance_km": 20.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 109, "mode": " T", "distance_km": 48.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 95, "mode": " T", "distance_km": 23.0, "diagnostic_smur": "SCA ST+"}, {"out_of_hospital_time_minute": 77, "mode": " T", "distance_km": 23.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 98, "mode": " T", "distance_km": 27.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 79, "mode": " T", "distance_km": 32.0, "diagnostic_smur": "Polytraumatise"}, {"out_of_hospital_time_minute": 116, "mode": " T", "distance_km": 27.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 97, "mode": " T", "distance_km": 34.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 101, "mode": " T", "distance_km": 35.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 149, "mode": " T", "distance_km": 45.0, "diagnostic_smur": "SCA non ST+"}, {"out_of_hospital_time_minute": 89, "mode": " T", "distance_km": 22.0, "diagnostic_smur": "DT atypique  "}
+//END data  
+
+var xVals = function(d){return d.distance_km;};
+var yVals = function(d){return d.out_of_hospital_time_minute;};
+    
+function randomData() {
+    return Math.random() * 9;
+}
+
+function update() {
+    for (var i = 0; i < data.length; ++i) {
+        var series = data[i];
+        series.length = 0;
+        for (var j = 0; j < numberOfDataPoint; ++j)
+            series.push({x: xVals, y: yVals});
+    }
+
+    chart.render();
+}
+
+var numberOfSeries = 8,
+    numberOfDataPoint = 11,
+    data = [];
+
+for (var i = 0; i < numberOfSeries; ++i)
+    data.push(d3.range(numberOfDataPoint).map(function (i) {
+        return {x: xVals, y: yVals};
+    }));
+
+var chart = scatterPlotChart()
+        .x(d3.scale.linear().domain([0, 180]))
+        .y(d3.scale.linear().domain([0, 3]));
+
+data.forEach(function (series) {
+    chart.addSeries(series);
+});
+
+chart.render();
+</script>
+
+<div class="control-group">
+    <button onclick="update()">Update</button>
+</div>
+
+</body>
+
+</html>

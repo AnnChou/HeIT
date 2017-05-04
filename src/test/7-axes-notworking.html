@@ -1,0 +1,170 @@
+<html>
+
+<meta charset="utf-8" />
+<head>
+<title>D3 Example</title>
+<style>
+h1 { 
+  font-family: sans-serif;
+  text-align: center;
+}
+
+svg {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid black;
+}
+
+svg text {
+  font-size: 11px;
+  font-family: sans-serif;
+  text-anchor: middle;
+  fill: black;
+}
+
+</style>
+<script src="https://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+<script type="text/javascript" src="../../lib/d3.js"></script>
+</head>
+
+<body>
+<h1>D3 Example</h1>
+<svg class="chart"></svg>
+
+<script>
+
+/********
+ * Data *
+ ********/
+
+var sampleData = HTdata;
+var dataset = HTdata;            
+
+/**********
+ * Scales *
+ **********/
+var margin = {top: 30, right: 20, bottom: 30, left: 50},
+    width = 800 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+//var chartWidth = 500;
+//var w = 500;
+//var chartHeight = 500;
+//var h = 500;    
+var x,y,c,s,r;    
+    
+//Input! Domain!
+//Output! Range! screen
+//var scale = d3.scale.linear()
+//                    .domain([100, 500])
+//                    .range([10, 350]);
+
+//var xScale = d3.scale.linear()
+//                     .domain([0, d3.max(dataset, function(d) { return d[0]; })])
+//                     .range([0, w]);
+
+
+//// x position
+//  x = d3.scaleLinear()
+//      .domain([0,data.length-1])
+//      .range([60,440]);    
+
+var xScale = d3.scale.linear()
+                     .domain([0, d3.max(dataset, function(d) { return d[0]; })])
+                     .range([0, width]);
+    
+x = xScale;
+    
+// y position
+//y = d3.scaleLinear()
+//      .domain(d3.extent(sampleData,function(d){ return d.age; }))
+//      .range([465,10]);
+
+var yScale = d3.scale.linear()
+                     .domain([0, d3.max(dataset, function(d) { return d[1]; })])
+                     .range([0, height]);
+y = yScale;
+
+/********
+ * Axes *
+ ********/
+
+var xAxis;
+var yAxis;
+
+/**************
+ * Make Chart *
+ **************/
+
+function makeChart(data){
+
+   x = xScale;
+
+   y = yScale;
+  
+  // color
+  c = d3.scaleOrdinal()
+      .domain(["male","female"])
+      .range(["#a6cee3","#fb9a99"]);
+  
+  // stroke
+  s = d3.scaleOrdinal()
+      .domain(["0","1"])
+      .range(["#e31a1c","#1f78b4"]);
+  
+  // radius
+  r = d3.scaleLinear()
+      .domain([0,d3.max(sampleData,function(d){ return d.fare; })])
+      .range([5,10]);
+  
+  var canvas = d3.select(".chart")
+      .style("width",chartWidth)
+      .style("height",chartHeight);
+    
+  var scatter = d3.select(".chart").selectAll("circle")
+      .data(data);
+  
+  //ENTER
+  var enter = scatter.enter().append("circle")
+      .attr("fill-opacity",0.85)
+      .attr("r",function(d){ return 5; })
+      .attr("stroke-width","0px");
+  
+  // Add a title to the point (on mouseover)
+  enter.append("svg:title")
+      .text(function(d){ return d.name; });
+    
+  //ENTER + UPDATE
+  enter.merge(scatter)
+      .attr("cx",function(d,i){ return x(i); })
+      .attr("cy",function(d){ return y(d.age); })
+      .attr("fill",function(d){ return c(d.sex); })
+      .attr("stroke",function(d){ return s(d.survived); });
+  
+  xAxis = d3.axisBottom()
+      .scale(x)
+      .ticks(0);
+  
+  yAxis = d3.axisLeft()
+      .scale(y);
+  
+  var yAxisGroup = canvas.append("g")
+      .attr("class","axis")
+      .attr("transform","translate(25,0)")
+      .call(yAxis);
+  
+  yAxisGroup.selectAll("text")
+      .attr("transform", "translate(-5,0)");
+  
+  canvas.append("g")
+      .attr("class","axis")
+      .attr("transform","translate(0,"+(chartHeight-25)+")")
+      .call(xAxis);
+
+}
+
+makeChart(sampleData);
+
+</script>
+</body>
+</html>

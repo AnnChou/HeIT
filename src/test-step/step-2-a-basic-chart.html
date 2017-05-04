@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Step 1 - A Basic Pie Chart</title>
+    <link rel="stylesheet" href="normalize.css">
+  </head>
+  <body>
+    <div id="chart"></div>
+    <script src="d3.v3.min.js"></script>
+    <script>
+      (function(d3) {
+        'use strict';
+
+
+//       var data = [
+//           {"devenir_28j": "sortie d hospitalisation", "diagnostic_smur": "SCA ST+", "distance_km": 76.3, "mode": " H", "appel_date": "1/2/2014", "out_of_hospital_time_minute": 127}, 
+//           {"devenir_28j": "sortie d hospitalisation", "diagnostic_smur": "SCA ST+", "distance_km": 40.9, "mode": " H", "appel_date": "1/11/2014", "out_of_hospital_time_minute": 70}, 
+//            {"devenir_28j": "Sortie d hospitalisation", "diagnostic_smur": "SCA non ST+", "distance_km": 78.0, "mode": " H", "appel_date": "2/21/2014", "out_of_hospital_time_minute": 90}, {"devenir_28j": "Sortie d hospitalisation", "diagnostic_smur": "SCA non ST+", "distance_km": 72.0, "mode": " H", "appel_date": "3/20/2014", "out_of_hospital_time_minute": 88},
+//           {"devenir_28j": null, "diagnostic_smur": "Douleur non cororienne", "distance_km": 33.0, "mode": " T", "appel_date": "5/10/2014", "out_of_hospital_time_minute": 103},
+//           {"devenir_28j": "Hospitalise", "diagnostic_smur": "Polytraumatise", "distance_km": 17.0, "mode": " T", "appel_date": "5/11/2014", "out_of_hospital_time_minute": 136}, 
+//           {"devenir_28j": "Sortie d hospitalisation", "diagnostic_smur": "SCA non ST+", "distance_km": 25.0, "mode": " T", "appel_date": "5/11/2014", "out_of_hospital_time_minute": 105}, {"devenir_28j": "Sortie d hospitalisation", "diagnostic_smur": "SCA non ST+", "distance_km": 26.0, "mode": " T", "appel_date": "5/12/2014", "out_of_hospital_time_minute": 106}
+//           ]
+       
+    
+        /* 
+         * value accessor - returns the value to encode for a given data object.
+         * scale - maps value to a visual display encoding, such as a pixel position.
+         * map function - maps from data value to display value
+         * axis - sets up axis
+         */
+        var margin = {top: 20, right: 20, bottom: 30, left: 40},
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+  
+        // setup x 
+        var xValue = function(d) { return d.distance_km;}, // data -> value
+            xScale = d3.scale.linear().range([0, width]), // value -> display
+            xMap = function(d) { return xScale(xValue(d));}, // data -> display
+            xAxis = d3.svg.axis().scale(xScale).orient("bottom");  
+
+        // setup y
+        var yValue = function(d) { return d["out_of_hospital_time_minute"];}, // data -> value
+            yScale = d3.scale.linear().range([height, 0]), // value -> display
+            yMap = function(d) { return yScale(yValue(d));}, // data -> display
+            yAxis = d3.svg.axis().scale(yScale).orient("left");          
+          
+        // setup fill color
+        var cValue = function(d) { return d.diagnostic_smur;},
+            color = d3.scale.category10();
+        //var color = d3.scaleOrdinal(d3.schemeCategory20b);
+          
+          
+        // add the graph canvas to the body of the webpage
+        var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+          
+        // tooltip to be here
+
+        // if load data from csv, here  
+        d3.csv("data-5column.csv", function(error, data) {
+
+        // change string (from CSV) into number format
+          data.forEach(function(d) {
+            d.distance_km = +d.distance_km;
+            d["out_of_hospital_time_minute"] = +d["out_of_hospital_time_minute"];
+            console.log(d);
+          });  
+
+        // to add in buffer to data domain  - > so dots not overlap aix
+        
+        // x-axis
+        
+        // y-axis
+
+        // draw dots
+        var path = svg.selectAll(".dot")     // another svg
+                      .data(data)
+                      .enter().append("circle")
+                      .attr("class", "dot")
+                      .attr("r", 3.5)
+                      .attr("cx", xMap)
+                      .attr("cy", yMap)
+                      .style("fill", function(d) { return color(cValue(d));
+                        }); 
+
+        // draw legend
+
+      })(window.d3);
+    </script>
+  </body>
+</html>
